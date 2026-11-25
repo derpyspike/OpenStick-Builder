@@ -33,9 +33,9 @@ fi
 # dependencies) is written to files/ next to the images.
 # Needs: git, cargo with target aarch64-unknown-linux-musl, go >= 1.26.
 DONGIE_RS_REPO=${DONGIE_RS_REPO=https://github.com/derpyspike/dongie-rs.git}
-DONGIE_RS_REF=${DONGIE_RS_REF=v0.2.0}
+DONGIE_RS_REF=${DONGIE_RS_REF=v0.1.0}
 DONGIE_IMS_REPO=${DONGIE_IMS_REPO=https://github.com/derpyspike/dongie-ims.git}
-DONGIE_IMS_REF=${DONGIE_IMS_REF=v0.2.0}
+DONGIE_IMS_REF=${DONGIE_IMS_REF=v0.1.0}
 if [ "${WITH_DONGIE:-1}" = 1 ]; then
     for t in git cargo go; do
         command -v $t >/dev/null || { echo "build_extras: '$t' not found (or build with WITH_DONGIE=0)"; exit 1; }
