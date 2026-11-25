@@ -6,6 +6,7 @@ polkit.addRule(function(action, subject) {
     }
     switch (action.id) {
     case "org.freedesktop.ModemManager1.Messaging":           // read/send/delete SMS
+    case "org.freedesktop.ModemManager1.USSD":                // USSD codes (admin only in the UI)
     case "org.freedesktop.NetworkManager.network-control":    // hotspot on/off, LTE reconnect
     case "org.freedesktop.NetworkManager.enable-disable-wifi":
     case "org.freedesktop.NetworkManager.wifi.share.protected": // bring the WPA hotspot up
@@ -16,7 +17,12 @@ polkit.addRule(function(action, subject) {
     case "org.freedesktop.login1.reboot-multiple-sessions":
         return polkit.Result.YES;
     }
-    // Mesh tab (dongie >= 0.2): start/stop/restart muxtastic, that unit only (not enable/disable)
+    // Reticulum tab: restart the Reticulum daemon, that unit only
+    if (action.id === "org.freedesktop.systemd1.manage-units" &&
+        action.lookup("unit") === "lnsd.service" && action.lookup("verb") === "restart") {
+        return polkit.Result.YES;
+    }
+    // Mesh tab: start/stop/restart muxtastic, that unit only (not enable/disable)
     if (action.id === "org.freedesktop.systemd1.manage-units" &&
         action.lookup("unit") === "muxtastic.service" &&
         ["start", "stop", "restart"].indexOf(action.lookup("verb")) >= 0) {

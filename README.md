@@ -87,7 +87,7 @@ Edit [`scripts/setup.sh`](scripts/setup.sh) to add/remove packages. Note that th
 | --- | --- | --- |
 | fix-attach-apn | `WITH_FIX_ATTACH_APN` | The UZ801 modem firmware resets its LTE attach APN to `mobile.three.com.hk` (Three Hong Kong) at every modem boot, so some networks never register on LTE. At boot this sets the right APN for the inserted SIM (table in the script, extend it in `/etc/default/fix-attach-apn`). Unknown SIMs are left alone. |
 | flash tweaks | `WITH_FLASH_TWEAKS` | Small journal (32 MB), NetworkManager/ModemManager logging at WARN. Together with `noatime,commit=30` in `/etc/fstab`: about 8 KiB/min of writes when idle. |
-| [dongie-rs](https://github.com/derpyspike/dongie-rs) | `WITH_DONGIE` | Web dashboard + API: signal and cells, SMS, hotspot and Wi-Fi settings, network selection, services. |
+| [dongie-rs](https://github.com/derpyspike/dongie-rs) | `WITH_DONGIE` | Web dashboard + API: signal and cells, SMS and contacts, hotspot and Wi-Fi settings, network selection, WireGuard tunnels (edit peers, create tunnels), notifications (ntfy, webhook, Meshtastic, LXMF), services with RAM/CPU/network, settings from the web UI, Mesh tab for muxtastic. |
 | [dongie-ims](https://github.com/derpyspike/dongie-ims) | `WITH_DONGIE` | Wi-Fi calling (VoWiFi over the LTE data connection): receive and make calls in the browser, SMS over IMS. Installed but **off**, see below. |
 | [muxtastic](https://github.com/derpyspike/muxtastic) | `WITH_MUXTASTIC` | Shares one Meshtastic node (with Wi-Fi, joined to the stick's hotspot) between several apps; history in RAM only. Shown on dongie's Mesh tab. Installed but **off**, see below. |
 
