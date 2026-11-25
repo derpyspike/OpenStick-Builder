@@ -120,7 +120,19 @@ if [ "${WITH_DONGIE:-1}" = 1 ]; then
     install -D -m 0644 ${X}/dongie.tmpfiles ${DIST}/usr/lib/tmpfiles.d/dongie.conf
     install -D -m 0644 ${X}/50-dongie.rules ${DIST}/etc/polkit-1/rules.d/50-dongie.rules
     install -D -m 0440 ${X}/sudoers-dongie ${DIST}/etc/sudoers.d/dongie
-    if command -v visudo >/dev/null; then visudo -cqf ${DIST}/etc/sudoers.d/dongie; fi
+    # check it with the visudo of the sudo that will read it: the image's
+    # (classic sudo). The build host's may be sudo-rs (Ubuntu >= 25.10), whose
+    # visudo rejects classic settings such as !syslog.
+    CHROOT=${CHROOT=$(pwd)/rootfs}
+    if [ -x ${CHROOT}/usr/sbin/visudo ] && [ "$(id -u)" = 0 ]; then
+        cp ${DIST}/etc/sudoers.d/dongie ${CHROOT}/tmp/sudoers-dongie.check
+        chroot ${CHROOT} qemu-aarch64-static /usr/sbin/visudo -cqf /tmp/sudoers-dongie.check
+        rm -f ${CHROOT}/tmp/sudoers-dongie.check
+    elif command -v visudo >/dev/null && visudo --version 2>&1 | grep -q '^visudo version'; then
+        visudo -cqf ${DIST}/etc/sudoers.d/dongie
+    else
+        echo "build_extras: no classic visudo to check sudoers.d/dongie with, skipped"
+    fi
     enable_unit dongie.service
     # dongie-ims is NOT enabled: registering for Wi-Fi calling moves the SIM's
     # calls to the stick. Turn on with: systemctl enable --now dongie-ims
