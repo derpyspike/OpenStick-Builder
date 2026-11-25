@@ -96,6 +96,15 @@ fi
 echo "${KERNEL_SHA256}  ${KERNEL_APK}" | sha256sum -c -
 tar xkzf ${KERNEL_APK} -C ${CHROOT} --exclude=.PKGINFO --exclude=.SIGN* 2>/dev/null
 
+# The pmOS package ships modules.alias and modules.symbols empty (postmarketOS
+# regenerates them when the package is installed). Without them the kernel
+# loads no module by alias: USB gadget functions, nftables, the modem and
+# Wi-Fi drivers. Rebuild the index with the image's own depmod.
+KVER=$(ls ${CHROOT}/lib/modules | head -1)
+chroot ${CHROOT} qemu-aarch64-static /sbin/depmod -a ${KVER}
+[ -s ${CHROOT}/lib/modules/${KVER}/modules.alias ] || \
+    { echo "debootstrap: modules.alias for ${KVER} is still empty"; exit 1; }
+
 mkdir -p ${CHROOT}/boot/extlinux
 cp configs/extlinux.conf ${CHROOT}/boot/extlinux
 

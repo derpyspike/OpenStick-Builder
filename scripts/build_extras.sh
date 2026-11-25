@@ -112,6 +112,12 @@ if [ "${WITH_MUXTASTIC:-1}" = 1 ]; then
     # systemctl enable --now muxtastic
 fi
 
+# systemd enables every unit on the first boot unless a preset says otherwise
+if [ "${WITH_DONGIE:-1}" = 1 ] || [ "${WITH_MUXTASTIC:-1}" = 1 ]; then
+    install -D -m 0644 ${X}/20-openstick-extras.preset \
+        ${DIST}/usr/lib/systemd/system-preset/20-openstick-extras.preset
+fi
+
 if [ "${WITH_DONGIE:-1}" = 1 ]; then
     install -D -m 0644 ${X}/dongie.service ${DIST}/etc/systemd/system/dongie.service
     install -D -m 0644 ${X}/dongie-ims.service ${DIST}/etc/systemd/system/dongie-ims.service
