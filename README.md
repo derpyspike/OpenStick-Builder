@@ -46,6 +46,12 @@ This has been tested to work on **Ubuntu 22.04**
   ```shell
   sudo scripts/build_gt.sh
   ```
+- stage extras (see [Extras](#extras))
+
+  needs `git`, `cargo` (with `rustup target add aarch64-unknown-linux-musl`) and `go` >= 1.26 for dongie; or skip it with `WITH_DONGIE=0`
+  ```shell
+  sudo scripts/build_extras.sh
+  ```
 - create images
   ```shell
   sudo scripts/build_images.sh
@@ -61,6 +67,18 @@ The generated firmware files will be stored under the `files` directory
 
 ## Customizations
 Edit [`scripts/setup.sh`](scripts/setup.sh) to add/remove packages. Note that this script is running inside the `chroot` environment.
+
+## Extras
+[`scripts/build_extras.sh`](scripts/build_extras.sh) adds these to the image. Each one can be left out by setting its variable to `0` when building, e.g. `sudo WITH_DONGIE=0 ./build.sh`.
+
+| | variable | what it does |
+| --- | --- | --- |
+| fix-attach-apn | `WITH_FIX_ATTACH_APN` | The UZ801 modem firmware resets its LTE attach APN to `mobile.three.com.hk` (Three Hong Kong) at every modem boot, so some networks never register on LTE. At boot this sets the right APN for the inserted SIM (table in the script, extend it in `/etc/default/fix-attach-apn`). Unknown SIMs are left alone. |
+| flash tweaks | `WITH_FLASH_TWEAKS` | Small journal (32 MB), NetworkManager/ModemManager logging at WARN. Together with `noatime,commit=30` in `/etc/fstab`: about 8 KiB/min of writes when idle. |
+| [dongie-rs](https://github.com/derpyspike/dongie-rs) | `WITH_DONGIE` | Web dashboard + API: signal and cells, SMS, hotspot and Wi-Fi settings, network selection, services. |
+| [dongie-ims](https://github.com/derpyspike/dongie-ims) | `WITH_DONGIE` | Wi-Fi calling (VoWiFi over the LTE data connection): receive and make calls in the browser, SMS over IMS. Installed but **off**, see below. |
+
+dongie-rs and dongie-ims are built from source at the tag set in `build_extras.sh` (`DONGIE_RS_REF`, `DONGIE_IMS_REF`).
 
 ## Firmware Installation
 > [!WARNING]  
@@ -164,6 +182,19 @@ Edit [`scripts/setup.sh`](scripts/setup.sh) to add/remove packages. Note that th
           | tar xkzf - -C / --exclude=.PKGINFO --exclude=.SIGN* 2>/dev/null
   ```
 
+- dongie dashboard (if built with extras)
+
+  create a login, then open http://192.168.100.1:8040 (Wi-Fi hotspot or USB)
+  ```shell
+  sudo dongie user add <name>
+  ```
+  The unauthenticated API and the dashboard without login are off in this image; see `/etc/dongie/config.toml`.
+
+- Wi-Fi calling (dongie-ims) is off by default: once it registers, calls to the SIM's number ring on the stick (and in the dongie dashboard) instead of a phone with that SIM. Turn it on with
+  ```shell
+  sudo systemctl enable --now dongie-ims
+  ```
+
 ## License
 The build scripts in this repository are MIT-licensed (see `LICENSE`).
 
@@ -172,6 +203,15 @@ by the MIT license: they are proprietary binaries from the DragonBoard 410c
 bootloader package, redistributed in binary form under the terms in
 `LICENSE.qcom-db410c`, which is included with every build and release.
 
-The generated images also contain software under other licenses (Debian
-packages, the Linux kernel, lk2nd, qhypstub, gt/libusbgx, …); each keeps its
-own license.
+The generated images are an aggregate of separately licensed works, each under
+its own license, among them:
+- Debian packages (various licenses; exact versions in `packages.manifest` next
+  to the images, sources at [snapshot.debian.org](https://snapshot.debian.org/))
+- the Linux kernel (GPL-2.0), the postmarketOS package
+  `linux-postmarketos-qcom-msm8916`, source via
+  [postmarketOS](https://pkgs.postmarketos.org/package/master/postmarketos/aarch64/linux-postmarketos-qcom-msm8916)
+- lk2nd, qhypstub, gt and libusbgx (git submodules in `src/`)
+- extras: fix-attach-apn and the dongie configs (EUPL-1.2, SPDX headers),
+  dongie-rs (EUPL-1.2) and dongie-ims (GPL-3.0); their complete source,
+  including vendored dependencies, is in `sources-dongie-*.tar.xz` next to
+  the images

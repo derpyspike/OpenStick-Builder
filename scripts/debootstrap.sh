@@ -98,6 +98,10 @@ PARTUUID=a7ab80e8-e9d1-e8cd-f157-93f69b1d141e	/	ext4	noatime,commit=30,errors=re
 PARTUUID=80780b1d-0fe1-27d3-23e4-9244e62f8c46	/boot	ext2	noatime	0 2
 EOF
 
+# list of Debian packages + versions in the image (for license/source lookups)
+mkdir -p files
+chroot ${CHROOT} qemu-aarch64-static /usr/bin/dpkg-query -W -f '${Package}\t${Version}\n' > files/packages.manifest
+
 # backup rootfs
 tar cpzf rootfs.tgz --exclude="usr/bin/qemu-aarch64-static" -C rootfs .
 
