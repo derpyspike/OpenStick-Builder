@@ -212,7 +212,7 @@ dongie-rs, dongie-ims and muxtastic are built from source at the tags in [`confi
   ```shell
   sudo systemctl enable --now muxtastic
   ```
-  Apps connect to the stick on port 4404, the web UI (no login) is on port 8090, from the hotspot/USB or Tailscale; the service drops both ports on the LTE side (`wwan*`) while it runs. dongie's Mesh tab shows a summary behind dongie's login.
+  Apps connect to the stick on port 4404, the web UI (no login) is on port 8090, from the hotspot/USB or Tailscale; the service drops both ports on the LTE side (`wwan*`) while it runs. dongie's Mesh tab shows a summary behind dongie's login and (from dongie 0.2) edits node address, admin allowlist and history, and starts/stops muxtastic.
 
 ## License
 The build scripts in this repository are MIT-licensed (see `LICENSE`).

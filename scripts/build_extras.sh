@@ -104,6 +104,10 @@ fi
 if [ "${WITH_MUXTASTIC:-1}" = 1 ]; then
     install -D -m 0644 ${X}/muxtastic.service ${DIST}/etc/systemd/system/muxtastic.service
     install -D -m 0644 ${X}/muxtastic.toml ${DIST}/etc/muxtastic/muxtastic.toml
+    # dongie's Mesh tab may edit the settings (group dongie, set at boot)
+    if [ "${WITH_DONGIE:-1}" = 1 ]; then
+        install -D -m 0644 ${X}/muxtastic.tmpfiles ${DIST}/usr/lib/tmpfiles.d/muxtastic.conf
+    fi
     # not enabled: set tcp_host in /etc/muxtastic/muxtastic.toml, then
     # systemctl enable --now muxtastic
 fi
