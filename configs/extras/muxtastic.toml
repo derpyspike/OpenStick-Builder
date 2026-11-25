@@ -1,11 +1,9 @@
 # muxtastic on an OpenStick. Not enabled by default: set the node's address
 # below, then `systemctl enable --now muxtastic`.
-# Only loopback listeners, so neither the hotspot nor the LTE side can reach the
-# web UI (it has no login) or port 4404. Publish them on a private network
-# yourself, e.g. with Tailscale (never `tailscale funnel`):
-#   tailscale serve --bg --https=8443 http://127.0.0.1:8090
-#   tailscale serve --bg --tcp=4404 tcp://127.0.0.1:4404
-# dongie's Mesh tab reads the API on 127.0.0.1:8090 either way.
+# Listens on all interfaces, so apps (port 4404) and browsers (web UI on 8090,
+# no login) reach it over the hotspot/USB (br0) and e.g. Tailscale;
+# muxtastic.service drops both ports on the LTE side (wwan*) while it runs.
+# dongie's Mesh tab reads the API on 127.0.0.1:8090.
 
 [node]
 type = "tcp"
@@ -24,8 +22,8 @@ max_delay_secs = 60
 multiplier = 2
 
 [server]
-host = "127.0.0.1"
-port = 4404
+host = "0.0.0.0"
+port = 4404                     # also in muxtastic.service (LTE drop rule)
 max_clients = 8
 
 [virtual_node]
@@ -34,8 +32,8 @@ short_name = "MUX"
 sync_physical_identity = true
 
 [security]
-# Clients arrive through tailscale serve, i.e. from 127.0.0.1: an address
-# allowlist can't tell them apart, so remote admin stays blocked.
+# Admin packets to the node stay blocked; to allow them from some networks
+# only, list them in allow_admin_from (e.g. the tailnet, "100.64.0.0/10").
 blocked_portnums = ["ADMIN_APP"]
 allow_admin_from = []
 
@@ -44,8 +42,8 @@ enabled = false
 
 [web]
 enabled = true
-host = "127.0.0.1"
-port = 8090
+host = "0.0.0.0"
+port = 8090                     # also in muxtastic.service (LTE drop rule)
 storage = "memory"              # RAM only, nothing on flash
 database = ""
 retention_days = 1
