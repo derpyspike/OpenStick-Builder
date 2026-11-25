@@ -9,7 +9,12 @@ rm -rf ${CHROOT}
 debootstrap --foreign --arch arm64 \
     --keyring /usr/share/keyrings/debian-archive-keyring.gpg ${RELEASE} ${CHROOT}
 
-cp $(which qemu-aarch64-static) ${CHROOT}/usr/bin
+# static arm64 emulator: qemu-aarch64-static (older distros) or qemu-aarch64
+# (qemu-user-binfmt, Ubuntu >= 25.10 / Debian >= 13), copied in under the old
+# name so the chroot calls below stay the same
+QEMU=$(command -v qemu-aarch64-static || command -v qemu-aarch64) || \
+    { echo "debootstrap: no qemu-aarch64(-static) found"; exit 1; }
+cp "${QEMU}" ${CHROOT}/usr/bin/qemu-aarch64-static
 
 chroot ${CHROOT} qemu-aarch64-static /bin/bash /debootstrap/debootstrap --second-stage
 
