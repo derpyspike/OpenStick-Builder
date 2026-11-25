@@ -1,0 +1,14 @@
+# /etc/dongie/config.toml for OpenStick-Builder images (dongie-rs: web dashboard + API).
+# All keys and defaults: https://github.com/derpyspike/dongie-rs/blob/main/docs/configuration.md
+#
+# Web UI + login on the bridge (Wi-Fi hotspot + USB): http://192.168.100.1:8040
+# Create the first login with:  sudo dongie user add <name>
+web_listen = "192.168.100.1:8040"
+# The unauthenticated read-only API is meant for a VPN address (e.g. Tailscale) only,
+# so it is off here. Turn on with api_enabled = true + api_listen = "<vpn-ip>:8041".
+api_enabled = false
+# Dashboard without login: off, because the hotspot has a well-known default password.
+anonymous_guest = false
+hotspot_connection = "hotspot"
+lte_connection = "lte"
+services = ["ModemManager", "NetworkManager", "fix-attach-apn", "dongie-ims", "dnsproxy", "ssh"]

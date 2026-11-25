@@ -23,6 +23,7 @@ apt install -qqy --no-install-recommends \
     netcat-traditional \
     network-manager \
     openssh-server \
+    polkitd \
     qrtr-tools \
     rmtfs \
     sudo \
