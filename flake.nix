@@ -1,5 +1,6 @@
 {
   description = "OpenStick-Builder extras (fix-attach-apn, flash tweaks, dongie-rs + dongie-ims) for MSM8916 4G sticks";
+  # (muxtastic isn't built here yet: build_extras.sh builds it with zig, or MUXTASTIC_PREBUILT)
 
   # nix build .#extras      -> rootfs/ (the tree build_extras.sh stages into dist/) + files/ (source archives)
   # nix build .#dongie      -> bin/{dongie,dongie-ims} (static aarch64) + sources/*.tar.xz
@@ -142,9 +143,10 @@
           '';
 
           # runs the same scripts/build_extras.sh, with the Nix-built dongie
+          # (without muxtastic: its zig build needs the network, not in the sandbox)
           extras = pkgs.runCommand "openstick-extras" { nativeBuildInputs = [ pkgs.sudo ]; } ''
             cp -r ${self} src && chmod -R u+w src && cd src
-            DIST=$out/rootfs DONGIE_PREBUILT=${dongie} sh -e scripts/build_extras.sh
+            DIST=$out/rootfs DONGIE_PREBUILT=${dongie} WITH_MUXTASTIC=0 sh -e scripts/build_extras.sh
             mv files $out/files
           '';
         in
@@ -158,6 +160,8 @@
           packages = [
             (pkgs.rust-bin.stable.latest.default.override { targets = [ "aarch64-unknown-linux-musl" ]; })
             pkgs.go
+            pkgs.zig # muxtastic's C parts (scripts/zigcc-aarch64-musl)
+            pkgs.cmake
             pkgs.git
             pkgs.xz
             pkgs.shellcheck

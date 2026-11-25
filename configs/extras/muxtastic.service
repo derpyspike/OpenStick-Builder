@@ -1,0 +1,34 @@
+# SPDX-License-Identifier: EUPL-1.2
+# muxtastic: shares one Meshtastic node (Wi-Fi, joined to the stick's
+# hotspot) between apps. Everything stays in RAM (storage = "memory"), nothing
+# is written to flash; logs go to the journal.
+[Unit]
+Description=muxtastic — share one Meshtastic node between apps
+Documentation=https://github.com/derpyspike/dongie-rs/tree/main/contrib/muxtastic
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/muxtastic --config /etc/muxtastic/muxtastic.toml
+DynamicUser=yes
+RuntimeDirectory=muxtastic
+WorkingDirectory=/run/muxtastic
+Restart=always
+RestartSec=10
+# history lives in RAM: if it ever grows past this, muxtastic restarts empty
+MemoryHigh=48M
+MemoryMax=64M
+IPAccounting=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+LogRateLimitIntervalSec=30s
+LogRateLimitBurst=50
+
+[Install]
+WantedBy=multi-user.target

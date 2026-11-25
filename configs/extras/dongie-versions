@@ -1,4 +1,5 @@
-# Pinned dongie releases, read by scripts/build_extras.sh and flake.nix.
+# Pinned dongie (and muxtastic) releases, read by scripts/build_extras.sh and flake.nix.
 # After a bump, `nix build .#extras` tells you the new hashes for flake.nix.
 DONGIE_RS_REF=v0.1.0
 DONGIE_IMS_REF=v0.1.0
+MUXTASTIC_REF=v0.2.0

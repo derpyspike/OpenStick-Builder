@@ -48,7 +48,7 @@ This has been tested to work on **Ubuntu 22.04**
   ```
 - stage extras (see [Extras](#extras))
 
-  needs `git`, `cargo` (with `rustup target add aarch64-unknown-linux-musl`) and `go` >= 1.26 for dongie; or skip it with `WITH_DONGIE=0`
+  needs `git`, `cargo` (with `rustup target add aarch64-unknown-linux-musl`) and `go` >= 1.26 for dongie, plus `zig` (or `pip install ziglang`) and `cmake` for muxtastic; or skip them with `WITH_DONGIE=0` / `WITH_MUXTASTIC=0`
   ```shell
   sudo scripts/build_extras.sh
   ```
@@ -89,8 +89,9 @@ Edit [`scripts/setup.sh`](scripts/setup.sh) to add/remove packages. Note that th
 | flash tweaks | `WITH_FLASH_TWEAKS` | Small journal (32 MB), NetworkManager/ModemManager logging at WARN. Together with `noatime,commit=30` in `/etc/fstab`: about 8 KiB/min of writes when idle. |
 | [dongie-rs](https://github.com/derpyspike/dongie-rs) | `WITH_DONGIE` | Web dashboard + API: signal and cells, SMS, hotspot and Wi-Fi settings, network selection, services. |
 | [dongie-ims](https://github.com/derpyspike/dongie-ims) | `WITH_DONGIE` | Wi-Fi calling (VoWiFi over the LTE data connection): receive and make calls in the browser, SMS over IMS. Installed but **off**, see below. |
+| [muxtastic](https://github.com/derpyspike/muxtastic) | `WITH_MUXTASTIC` | Shares one Meshtastic node (with Wi-Fi, joined to the stick's hotspot) between several apps; history in RAM only. Shown on dongie's Mesh tab. Installed but **off**, see below. |
 
-dongie-rs and dongie-ims are built from source at the tag set in `build_extras.sh` (`DONGIE_RS_REF`, `DONGIE_IMS_REF`).
+dongie-rs, dongie-ims and muxtastic are built from source at the tags in [`configs/extras/dongie-versions`](configs/extras/dongie-versions) (`DONGIE_RS_REF`, `DONGIE_IMS_REF`, `MUXTASTIC_REF`). muxtastic has C parts (SQLite, aws-lc), cross-compiled with zig ([`scripts/zigcc-aarch64-musl`](scripts/zigcc-aarch64-musl)); the Nix flake doesn't build it yet, `MUXTASTIC_PREBUILT=<dir>` (`bin/muxtastic`, `sources/*.tar.xz`) takes one built elsewhere.
 
 ## Firmware Installation
 > [!WARNING]  
@@ -207,6 +208,12 @@ dongie-rs and dongie-ims are built from source at the tag set in `build_extras.s
   sudo systemctl enable --now dongie-ims
   ```
 
+- muxtastic is off by default: it needs the address of your Meshtastic node (Wi-Fi on, joined to the stick's hotspot). Set `tcp_host` in `/etc/muxtastic/muxtastic.toml` (it suggests a fixed `dhcp-host` lease outside the DHCP pool), then
+  ```shell
+  sudo systemctl enable --now muxtastic
+  ```
+  It only listens on 127.0.0.1 (web UI on 8090 without login, apps on 4404); dongie's Mesh tab reads it there. To use it from elsewhere, publish it on a private network, e.g. `tailscale serve` (the config shows how), never on the open internet.
+
 ## License
 The build scripts in this repository are MIT-licensed (see `LICENSE`).
 
@@ -224,6 +231,7 @@ its own license, among them:
   [postmarketOS](https://pkgs.postmarketos.org/package/master/postmarketos/aarch64/linux-postmarketos-qcom-msm8916)
 - lk2nd, qhypstub, gt and libusbgx (git submodules in `src/`)
 - extras: fix-attach-apn and the dongie configs (EUPL-1.2, SPDX headers),
-  dongie-rs (EUPL-1.2) and dongie-ims (GPL-3.0); their complete source,
-  including vendored dependencies, is in `sources-dongie-*.tar.xz` next to
-  the images
+  dongie-rs (EUPL-1.2), dongie-ims (GPL-3.0) and muxtastic
+  (AGPL-3.0-or-later); their complete source, including vendored
+  dependencies, is in `sources-dongie-*.tar.xz` and `sources-muxtastic-*.tar.xz`
+  next to the images

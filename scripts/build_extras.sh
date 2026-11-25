@@ -68,6 +68,46 @@ elif [ "${WITH_DONGIE:-1}" = 1 ]; then
     tar -C ${SRC} -cJf files/sources-dongie-ims-${DONGIE_IMS_REF}.tar.xz dongie-ims
 fi
 
+# muxtastic (shares one Meshtastic node between apps; AGPL-3.0-or-later,
+# https://github.com/derpyspike/muxtastic): for a node with Wi-Fi on the
+# stick's hotspot. Shown on dongie's Mesh tab. Installed, NOT enabled (it
+# needs the node's address first). Has C parts (SQLite, aws-lc): needs zig
+# (or `pip install ziglang`) as the aarch64 C compiler, plus cmake.
+# MUXTASTIC_PREBUILT=<dir> takes bin/muxtastic + sources/*.tar.xz instead.
+MUXTASTIC_REPO=${MUXTASTIC_REPO=https://github.com/derpyspike/muxtastic.git}
+if [ "${WITH_MUXTASTIC:-1}" = 1 ] && [ -n "${MUXTASTIC_PREBUILT}" ]; then
+    mkdir -p files
+    install -D -m 0755 ${MUXTASTIC_PREBUILT}/bin/muxtastic ${DIST}/usr/local/bin/muxtastic
+    install -m 0644 ${MUXTASTIC_PREBUILT}/sources/*.tar.xz files/
+elif [ "${WITH_MUXTASTIC:-1}" = 1 ]; then
+    command -v zig >/dev/null || python3 -m ziglang version >/dev/null 2>&1 || \
+        { echo "build_extras: zig not found (pip install ziglang, or build with WITH_MUXTASTIC=0)"; exit 1; }
+    for t in git cargo cmake; do
+        command -v $t >/dev/null || { echo "build_extras: '$t' not found (or build with WITH_MUXTASTIC=0)"; exit 1; }
+    done
+    SRC=$(pwd)/build/extras-muxtastic
+    ZCC=$(pwd)/scripts/zigcc-aarch64-musl
+    rm -rf ${SRC} && mkdir -p ${SRC} files
+    git clone -q --depth 1 -b ${MUXTASTIC_REF} ${MUXTASTIC_REPO} ${SRC}/muxtastic
+    (cd ${SRC}/muxtastic && \
+        CC_aarch64_unknown_linux_musl=${ZCC} AR_aarch64_unknown_linux_musl=${ZCC}-ar \
+        CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=rust-lld \
+        CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-C target-feature=+crt-static" \
+        cargo build -q --release --locked --target aarch64-unknown-linux-musl -p muxtastic)
+    install -D -m 0755 ${SRC}/muxtastic/target/aarch64-unknown-linux-musl/release/muxtastic ${DIST}/usr/local/bin/muxtastic
+    # complete corresponding source (AGPL), with vendored dependencies
+    (cd ${SRC}/muxtastic && cargo vendor -q --locked vendor >/dev/null && mkdir -p .cargo && \
+        printf '\n[source.crates-io]\nreplace-with = "vendored-sources"\n\n[source.vendored-sources]\ndirectory = "vendor"\n' >> .cargo/config.toml)
+    rm -rf ${SRC}/muxtastic/target ${SRC}/muxtastic/.git
+    tar -C ${SRC} -cJf files/sources-muxtastic-${MUXTASTIC_REF}.tar.xz muxtastic
+fi
+if [ "${WITH_MUXTASTIC:-1}" = 1 ]; then
+    install -D -m 0644 ${X}/muxtastic.service ${DIST}/etc/systemd/system/muxtastic.service
+    install -D -m 0644 ${X}/muxtastic.toml ${DIST}/etc/muxtastic/muxtastic.toml
+    # not enabled: set tcp_host in /etc/muxtastic/muxtastic.toml, then
+    # systemctl enable --now muxtastic
+fi
+
 if [ "${WITH_DONGIE:-1}" = 1 ]; then
     install -D -m 0644 ${X}/dongie.service ${DIST}/etc/systemd/system/dongie.service
     install -D -m 0644 ${X}/dongie-ims.service ${DIST}/etc/systemd/system/dongie-ims.service
