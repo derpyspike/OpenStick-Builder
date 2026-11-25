@@ -59,6 +59,18 @@ This has been tested to work on **Ubuntu 22.04**
 
 The generated firmware files will be stored under the `files` directory
 
+### With Nix
+The [`flake.nix`](flake.nix) builds the [extras](#extras) without apt or toolchains on the host. The dongie versions come from [`configs/extras/dongie-versions`](configs/extras/dongie-versions), the same file `build_extras.sh` reads.
+```shell
+nix build .#dongie     # result/bin/{dongie,dongie-ims} (static aarch64) + result/sources/*.tar.xz
+nix build .#extras     # result/rootfs: everything the extras add to the image (to inspect), result/files: source archives
+nix develop            # Rust (aarch64-musl) + Go toolchains, shellcheck, actionlint
+```
+To use the Nix-built dongie in an image build (the image itself still needs the scripts, as root):
+```shell
+sudo DONGIE_PREBUILT=$(nix build --print-out-paths .#dongie) ./build.sh
+```
+
 ### On the cloud using Github Actions
 1. Fork this repo
 2. Run the [Build workflow](../../actions/workflows/build.yml)
