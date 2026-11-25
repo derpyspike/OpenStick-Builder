@@ -18,3 +18,11 @@ if [ "${WITH_FIX_ATTACH_APN:-1}" = 1 ]; then
     install -m 0644 ${X}/fix-attach-apn.service ${DIST}/etc/systemd/system/
     enable fix-attach-apn.service
 fi
+
+# fewer flash writes: small journal, quieter NetworkManager/ModemManager logs
+# (measured on a UZ801: ~8 KiB/min of writes when idle)
+if [ "${WITH_FLASH_TWEAKS:-1}" = 1 ]; then
+    install -D -m 0644 ${X}/journald-flash.conf ${DIST}/etc/systemd/journald.conf.d/50-flash.conf
+    install -D -m 0644 ${X}/NetworkManager-quiet.conf ${DIST}/etc/NetworkManager/conf.d/50-quiet.conf
+    install -D -m 0644 ${X}/ModemManager-quiet.conf ${DIST}/etc/systemd/system/ModemManager.service.d/50-quiet.conf
+fi

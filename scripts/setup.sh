@@ -74,10 +74,7 @@ alias du='du -hs'
 
 EOF
 
-cat <<EOF >> /etc/systemd/journald.conf
-SystemMaxUse=300M
-SystemKeepFree=1G
-EOF
+# journald limits: see configs/extras/journald-flash.conf (scripts/build_extras.sh)
 
 # install dnsproxy
 bash /install_dnsproxy.sh

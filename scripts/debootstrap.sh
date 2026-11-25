@@ -91,7 +91,12 @@ cp dtbs/* ${CHROOT}/boot/dtbs/qcom/
 mkdir -p ${CHROOT}/lib/firmware/msm-firmware-loader
 
 # update fstab
-echo "PARTUUID=80780b1d-0fe1-27d3-23e4-9244e62f8c46\t/boot\text2\tdefaults\t0 2" > ${CHROOT}/etc/fstab
+# noatime + 30 s ext4 commit interval: fewer flash writes (root is remounted
+# with these options by systemd-remount-fs)
+cat <<EOF > ${CHROOT}/etc/fstab
+PARTUUID=a7ab80e8-e9d1-e8cd-f157-93f69b1d141e	/	ext4	noatime,commit=30,errors=remount-ro	0 1
+PARTUUID=80780b1d-0fe1-27d3-23e4-9244e62f8c46	/boot	ext2	noatime	0 2
+EOF
 
 # backup rootfs
 tar cpzf rootfs.tgz --exclude="usr/bin/qemu-aarch64-static" -C rootfs .
