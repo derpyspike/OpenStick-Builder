@@ -30,6 +30,9 @@ jobs:
       - name: Build gadget-tool
         run: sudo sh -e scripts/build_gt.sh
 
+      - name: Stage extras
+        run: sudo sh -e scripts/build_extras.sh
+
       - name: Create images
         run: sudo sh -e scripts/build_images.sh
 

@@ -16,6 +16,7 @@ apt install -qqy --no-install-recommends \
     bridge-utils \
     dnsmasq \
     iptables \
+    libqmi-utils \
     libconfig9 \
     locales \
     modemmanager \
