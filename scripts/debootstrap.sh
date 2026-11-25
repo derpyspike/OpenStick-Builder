@@ -82,9 +82,19 @@ cp configs/*.nmconnection ${CHROOT}/etc/NetworkManager/system-connections
 chmod 0600 ${CHROOT}/etc/NetworkManager/system-connections/*
 cp configs/99-custom.conf ${CHROOT}/etc/NetworkManager/conf.d/
 
-# install kernel
-wget -O - https://mirror.postmarketos.org/postmarketos/main/aarch64/linux-postmarketos-qcom-msm8916-6.12.1-r5.apk \
-    | tar xkzf - -C ${CHROOT} --exclude=.PKGINFO --exclude=.SIGN* 2>/dev/null
+# install kernel: postmarketOS linux-postmarketos-qcom-msm8916 6.12.1-r5.
+# pmOS 'main' only keeps the newest build (it dropped -r5 for -r7), so take
+# it from the v26.06 release branch, and check it: the apk isn't otherwise
+# verified here. KERNEL_APK=<file> uses a local copy instead of downloading.
+KERNEL_URL=${KERNEL_URL=https://mirror.postmarketos.org/postmarketos/v26.06/aarch64/linux-postmarketos-qcom-msm8916-6.12.1-r5.apk}
+KERNEL_SHA256=${KERNEL_SHA256=0dba1a1da6c271d335ce0790fcc9503e4bff164ea5601e75da6337600174b5c8}
+if [ -z "${KERNEL_APK}" ]; then
+    KERNEL_APK=$(pwd)/build/kernel.apk
+    mkdir -p build
+    wget -q -O ${KERNEL_APK} ${KERNEL_URL}
+fi
+echo "${KERNEL_SHA256}  ${KERNEL_APK}" | sha256sum -c -
+tar xkzf ${KERNEL_APK} -C ${CHROOT} --exclude=.PKGINFO --exclude=.SIGN* 2>/dev/null
 
 mkdir -p ${CHROOT}/boot/extlinux
 cp configs/extlinux.conf ${CHROOT}/boot/extlinux
