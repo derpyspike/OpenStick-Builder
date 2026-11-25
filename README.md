@@ -163,3 +163,15 @@ Edit [`scripts/setup.sh`](scripts/setup.sh) to add/remove packages. Note that th
   wget -O - http://mirror.postmarketos.org/postmarketos/master/aarch64/linux-postmarketos-qcom-msm8916-6.12.1-r2.apk \
           | tar xkzf - -C / --exclude=.PKGINFO --exclude=.SIGN* 2>/dev/null
   ```
+
+## License
+The build scripts in this repository are MIT-licensed (see `LICENSE`).
+
+The boot firmware files `rpm.mbn`, `sbl1.mbn` and `tz.mbn` are **not** covered
+by the MIT license: they are proprietary binaries from the DragonBoard 410c
+bootloader package, redistributed in binary form under the terms in
+`LICENSE.qcom-db410c`, which is included with every build and release.
+
+The generated images also contain software under other licenses (Debian
+packages, the Linux kernel, lk2nd, qhypstub, gt/libusbgx, …); each keeps its
+own license.
