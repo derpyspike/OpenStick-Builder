@@ -26,6 +26,7 @@ apt install -qqy --no-install-recommends \
     modemmanager \
     netcat-traditional \
     network-manager \
+    nftables \
     openssh-server \
     polkitd \
     qrtr-tools \
