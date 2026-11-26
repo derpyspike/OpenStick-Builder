@@ -12,7 +12,7 @@ api_enabled = false
 # not for the upstream Wi-Fi when the stick is a client. Change the hotspot's
 # default password, or set anonymous_guest = false, if that's too much.
 anonymous_guest = true
-guest_networks = ["192.168.100.0/24", "dead:beef::/64", "fe80::/10", "100.64.0.0/10", "fd7a:115c:a1e0::/48"]
+guest_networks = ["192.168.100.0/24", "fdde:ad:beef::/64", "fe80::/10", "100.64.0.0/10", "fd7a:115c:a1e0::/48"]
 hotspot_connection = "hotspot"
 lte_connection = "lte"
 services = ["ModemManager", "NetworkManager", "tailscaled", "fix-attach-apn", "dongie-leds", "dongie-ims", "muxtastic", "dnsproxy", "ssh"]
