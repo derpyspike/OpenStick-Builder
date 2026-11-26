@@ -180,6 +180,12 @@ dongie-rs, dongie-ims and muxtastic are built from source at the tags in [`confi
   | username | user |
   | password | 1 |
  
+- CPU idle is off (`cpuidle.off=1` in `/boot/extlinux/extlinux.conf`). Some
+  sticks hang early in boot, before userspace, as soon as a core enters PSCI
+  power collapse (seen on one UZ801 with the same SoC revision and firmware as
+  two that run fine). Idle cores then wait in WFI instead, a few dozen mW more.
+  To try it on a stick that is known to be fine, remove `cpuidle.off=1` and reboot.
+
 - If your device is not based on **UZ801**, modify `/boot/extlinux/extlinux.conf` to use the correct devicetree
   ```shell
   sed -i 's/yiming-uz801v3/<BOARD>/' /boot/extlinux/extlinux.conf
