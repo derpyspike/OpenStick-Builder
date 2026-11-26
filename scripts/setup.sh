@@ -44,10 +44,11 @@ apt install -qqy --no-install-recommends \
     mobile-broadband-provider-info \
     openresolv
 
-# zram swap: 90 % of RAM (lz4). The sticks have 384-512 MB and no other swap;
-# compressed pages take ~1/3 of that, so this stays well below real RAM.
+# zram swap: 90 % of RAM, zstd (in the pmOS kernel; compresses ~3-4x). The sticks
+# have 384-512 MB and no other swap;
+# compressed pages take a fraction of that, so this stays well below real RAM.
 # zram-tools >= 0.3.7 (Debian 13) uses PERCENT over SIZE when both are set.
-printf 'ALGO=lz4\nPERCENT=90\nPRIORITY=100\n' > /etc/default/zramswap
+printf 'ALGO=zstd\nPERCENT=90\nPRIORITY=100\n' > /etc/default/zramswap
 
 # Cleanup
 apt clean
