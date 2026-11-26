@@ -15,9 +15,12 @@ apt autoremove -qqy
 # gt's libconfig: libconfig11 since Debian 13, libconfig9 in Debian 12
 LIBCONFIG=libconfig9
 apt-cache show libconfig11 >/dev/null 2>&1 && LIBCONFIG=libconfig11
+# gpgv: dongie's Update button checks the release signature with it. Debian 13's
+# apt uses sqv instead, so gpgv is no longer pulled in by default.
 apt install -qqy --no-install-recommends \
     bridge-utils \
     dnsmasq \
+    gpgv \
     iptables \
     iw \
     libqmi-utils \
