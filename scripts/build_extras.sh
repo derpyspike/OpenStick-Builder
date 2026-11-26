@@ -123,6 +123,63 @@ if [ "${WITH_MUXTASTIC:-1}" = 1 ]; then
     # systemctl enable --now muxtastic
 fi
 
+# Leviculum (Reticulum in Rust; AGPL-3.0, https://codeberg.org/Lew_Palm/leviculum):
+# lnsd (daemon, storage in RAM only), lnstatus (dongie's Reticulum tab) and
+# loquax (LXMF messenger CLI; installed as lnmsg too, which dongie's LXMF
+# notifications call). From the dongie-master branch of our mirror (upstream +
+# local LXMF fixes) at LEVICULUM_REF. Installed, NOT enabled: needs your
+# transport node in /etc/lnsd/config. Needs zig like muxtastic (mimalloc).
+# LEVICULUM_PREBUILT=<dir> takes bin/{lnsd,lnstatus,loquax} + sources/*.tar.xz.
+LEVICULUM_REPO=${LEVICULUM_REPO=https://github.com/derpyspike/leviculum.git}
+if [ "${WITH_LEVICULUM:-1}" = 1 ] && [ -n "${LEVICULUM_PREBUILT}" ]; then
+    mkdir -p files
+    for b in lnsd lnstatus loquax; do
+        install -D -m 0755 ${LEVICULUM_PREBUILT}/bin/$b ${DIST}/usr/local/bin/$b
+    done
+    install -m 0644 ${LEVICULUM_PREBUILT}/sources/*.tar.xz files/
+elif [ "${WITH_LEVICULUM:-1}" = 1 ]; then
+    command -v zig >/dev/null || python3 -m ziglang version >/dev/null 2>&1 || \
+        { echo "build_extras: zig not found (pip install ziglang, or build with WITH_LEVICULUM=0)"; exit 1; }
+    for t in git cargo; do
+        command -v $t >/dev/null || { echo "build_extras: '$t' not found (or build with WITH_LEVICULUM=0)"; exit 1; }
+    done
+    SRC=$(pwd)/build/extras-leviculum
+    ZCC=$(pwd)/scripts/zigcc-aarch64-musl
+    rm -rf ${SRC} && mkdir -p ${SRC}/leviculum files
+    # a pinned commit, not a tag: fetch exactly that one
+    (cd ${SRC}/leviculum && git init -q && git remote add origin ${LEVICULUM_REPO} && \
+        git fetch -q --depth 1 origin ${LEVICULUM_REF} && git checkout -q FETCH_HEAD)
+    LEV_ENV="CC_aarch64_unknown_linux_musl=${ZCC} AR_aarch64_unknown_linux_musl=${ZCC}-ar \
+        CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=rust-lld \
+        CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS=-Ctarget-feature=+crt-static \
+        CARGO_PROFILE_RELEASE_STRIP=symbols"
+    # no BLE and no I2P on the stick
+    (cd ${SRC}/leviculum && env ${LEV_ENV} cargo build -q --release --locked --target aarch64-unknown-linux-musl \
+        -p leviculum-cli --no-default-features --features compression,serial --bin lnsd --bin lnstatus)
+    (cd ${SRC}/leviculum && env ${LEV_ENV} cargo build -q --release --locked --target aarch64-unknown-linux-musl \
+        -p loquax --bin loquax)
+    for b in lnsd lnstatus loquax; do
+        install -D -m 0755 ${SRC}/leviculum/target/aarch64-unknown-linux-musl/release/$b ${DIST}/usr/local/bin/$b
+    done
+    # complete corresponding source (AGPL), with vendored dependencies
+    (cd ${SRC}/leviculum && cargo vendor -q --locked vendor-sources >/dev/null && mkdir -p .cargo && \
+        printf '\n[source.crates-io]\nreplace-with = "vendored-sources"\n\n[source.vendored-sources]\ndirectory = "vendor-sources"\n' >> .cargo/config.toml)
+    rm -rf ${SRC}/leviculum/target ${SRC}/leviculum/.git
+    tar -C ${SRC} -cJf files/sources-leviculum-${LEVICULUM_REF}.tar.xz leviculum
+fi
+if [ "${WITH_LEVICULUM:-1}" = 1 ]; then
+    # dongie's LXMF notifications call `lnmsg` (loquax's old name, same CLI)
+    ln -sf loquax ${DIST}/usr/local/bin/lnmsg
+    install -D -m 0755 ${X}/lnsd-setup ${DIST}/usr/local/sbin/lnsd-setup
+    install -D -m 0640 ${X}/lnsd.config ${DIST}/etc/lnsd/config
+    install -D -m 0644 ${X}/lnsd.sysusers ${DIST}/usr/lib/sysusers.d/lnsd.conf
+    for u in lnsd.service lnsd-prune.service lnsd-prune.timer run-lnsd.mount run-lnmsg.mount; do
+        install -D -m 0644 ${X}/$u ${DIST}/etc/systemd/system/$u
+    done
+    # not enabled: set the transport node in /etc/lnsd/config, then
+    # systemctl enable --now lnsd
+fi
+
 # Tailscale (BSD-3-Clause): VPN to reach the stick from anywhere; dongie's
 # web UI and dongie-ims' browser calls (HTTPS via `tailscale serve`) lean on
 # it. Static binaries from pkgs.tailscale.com at TAILSCALE_VERSION, checked

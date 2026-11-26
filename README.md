@@ -48,7 +48,7 @@ This has been tested to work on **Ubuntu 22.04**
   ```
 - stage extras (see [Extras](#extras))
 
-  needs `git`, `cargo` (with `rustup target add aarch64-unknown-linux-musl`) and `go` >= 1.26 for dongie, plus `zig` (or `pip install ziglang`) and `cmake` for muxtastic; or skip them with `WITH_DONGIE=0` / `WITH_MUXTASTIC=0`
+  needs `git`, `cargo` (with `rustup target add aarch64-unknown-linux-musl`) and `go` >= 1.26 for dongie, plus `zig` (or `pip install ziglang`) and `cmake` for muxtastic, `zig` for Leviculum; or skip them with `WITH_DONGIE=0` / `WITH_MUXTASTIC=0` / `WITH_LEVICULUM=0`
   ```shell
   sudo scripts/build_extras.sh
   ```
@@ -92,10 +92,11 @@ Edit [`scripts/setup.sh`](scripts/setup.sh) to add/remove packages. Note that th
 | [dongie-rs](https://github.com/derpyspike/dongie-rs) | `WITH_DONGIE` | Web dashboard + API: signal and cells, SMS and contacts, hotspot and Wi-Fi settings, network selection, WireGuard tunnels (edit peers, create tunnels), notifications (ntfy, webhook, Meshtastic, LXMF), services with RAM/CPU/network, settings from the web UI, Mesh tab for muxtastic, update check with an Update button (installs only releases signed with the maintainer's GPG key, rolls back if the new version doesn't start). |
 | [dongie-ims](https://github.com/derpyspike/dongie-ims) | `WITH_DONGIE` | Wi-Fi calling (VoWiFi over the LTE data connection): receive and make calls in the browser, SMS over IMS. Installed but **off**, see below. |
 | [muxtastic](https://github.com/derpyspike/muxtastic) | `WITH_MUXTASTIC` | Shares one Meshtastic node (with Wi-Fi, joined to the stick's hotspot) between several apps; history in RAM only. Shown on dongie's Mesh tab. Installed but **off**, see below. |
+| [Leviculum](https://codeberg.org/Lew_Palm/leviculum) | `WITH_LEVICULUM` | Reticulum in Rust: `lnsd` (daemon, a plain client of your transport node, storage in RAM only: 12 MB tmpfs, pruned every 5 min), `lnstatus` (dongie's Reticulum tab) and `loquax` (LXMF messenger CLI, also as `lnmsg` for dongie's LXMF notifications). From the `dongie-master` branch of [github.com/derpyspike/leviculum](https://github.com/derpyspike/leviculum) (upstream + two local LXMF fixes) at `LEVICULUM_REF`. Installed but **off**, see below. lnsd measured at 5.5-12 MB RSS on a UZ801. |
 
 WireGuard needs no extra: the kernel module and `wireguard-tools` are in every image, and NetworkManager runs WireGuard tunnels itself (dongie's WireGuard tab edits them).
 
-dongie-rs, dongie-ims and muxtastic are built from source at the tags in [`configs/extras/dongie-versions`](configs/extras/dongie-versions) (`DONGIE_RS_REF`, `DONGIE_IMS_REF`, `MUXTASTIC_REF`). muxtastic has C parts (SQLite, aws-lc), cross-compiled with zig ([`scripts/zigcc-aarch64-musl`](scripts/zigcc-aarch64-musl)); the Nix flake doesn't build it yet, `MUXTASTIC_PREBUILT=<dir>` (`bin/muxtastic`, `sources/*.tar.xz`) takes one built elsewhere.
+dongie-rs, dongie-ims and muxtastic are built from source at the tags in [`configs/extras/dongie-versions`](configs/extras/dongie-versions) (`DONGIE_RS_REF`, `DONGIE_IMS_REF`, `MUXTASTIC_REF`). muxtastic has C parts (SQLite, aws-lc), cross-compiled with zig ([`scripts/zigcc-aarch64-musl`](scripts/zigcc-aarch64-musl)); the Nix flake doesn't build it yet, `MUXTASTIC_PREBUILT=<dir>` (`bin/muxtastic`, `sources/*.tar.xz`) takes one built elsewhere. Leviculum is built the same way from the commit `LEVICULUM_REF`; `LEVICULUM_PREBUILT=<dir>` (`bin/{lnsd,lnstatus,loquax}`, `sources/*.tar.xz`) takes binaries built elsewhere.
 
 ## Firmware Installation
 > [!WARNING]  
@@ -219,6 +220,12 @@ dongie-rs, dongie-ims and muxtastic are built from source at the tags in [`confi
   ```
   Apps connect to the stick on port 4404, the web UI (no login) is on port 8090, from the hotspot/USB or Tailscale; the service drops both ports on the LTE side (`wwan*`) while it runs. dongie's Mesh tab shows a summary behind dongie's login and (from dongie 0.2) edits node address, admin allowlist and history, and starts/stops muxtastic.
 
+- Reticulum (Leviculum `lnsd`) is off by default: it needs your transport node. Set `target_host` / `target_port` in `/etc/lnsd/config`, then
+  ```shell
+  sudo systemctl enable --now lnsd
+  ```
+  The first start generates the stick's `rpc_key` (also given to dongie for its Reticulum tab). lnsd keeps everything in RAM (`/run/lnsd`); only dongie's LXMF sender identity is on flash. dongie can then send notifications over LXMF (`[[notify]] kind = "lxmf"`).
+
 ## License
 The build scripts in this repository are MIT-licensed (see `LICENSE`).
 
@@ -236,10 +243,10 @@ its own license, among them:
   [postmarketOS](https://pkgs.postmarketos.org/package/master/postmarketos/aarch64/linux-postmarketos-qcom-msm8916)
 - lk2nd, qhypstub, gt and libusbgx (git submodules in `src/`)
 - extras: fix-attach-apn, dongie-leds and the dongie configs (EUPL-1.2, SPDX headers),
-  dongie-rs (EUPL-1.2), dongie-ims (GPL-3.0) and muxtastic
-  (AGPL-3.0-or-later); their complete source, including vendored
-  dependencies, is in `sources-dongie-*.tar.xz` and `sources-muxtastic-*.tar.xz`
-  next to the images
+  dongie-rs (EUPL-1.2), dongie-ims (GPL-3.0), muxtastic
+  (AGPL-3.0-or-later) and Leviculum (AGPL-3.0, with two local patches); their
+  complete source, including vendored dependencies, is in `sources-dongie-*.tar.xz`,
+  `sources-muxtastic-*.tar.xz` and `sources-leviculum-*.tar.xz` next to the images
 - Tailscale (BSD-3-Clause, unmodified release binaries; license in
   `/usr/share/doc/tailscale/LICENSE`, the licenses of its dependencies at
   [tailscale.com/licenses/tailscale](https://tailscale.com/licenses/tailscale),
