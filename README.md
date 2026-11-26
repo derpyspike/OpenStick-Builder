@@ -37,7 +37,7 @@ This has been tested to work on **Ubuntu 22.04**
   ```shell
   sudo scripts/extract_fw.sh
   ```
-- create rootfs using debootstrap
+- create rootfs using debootstrap (Debian 13 "trixie"; `RELEASE=bookworm` for Debian 12)
   ```shell
   sudo scripts/debootstrap.sh
   ```

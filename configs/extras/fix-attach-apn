@@ -14,13 +14,19 @@
 # After a change the modem is power-cycled and the matching NetworkManager
 # connection is brought up (one connection per SIM, bound with gsm.sim-operator-id).
 #
+# The same APN is also written into that NetworkManager connection when it
+# still uses gsm.auto-config (APN from mobile-broadband-provider-info) or holds
+# another APN from this table (an earlier SIM). Since Debian 13 the provider
+# database lists 'internetmas' first for 21403, which Simyo/Orange prepaid
+# rejects ("Call failed"). An APN typed in by hand (not in the table) is kept.
+#
 # Runs once at boot (fix-attach-apn.service). Logs go to the journal.
 # Set up 2026-11-24 on a UZ801. Credit for the diagnosis: Alejandro.
 
-# MCCMNC  -> "attach-APN  NetworkManager-connection"
+# MCCMNC  -> "attach-APN  NetworkManager-connection  [user password]"
 declare -A SIMS=(
   [21403]="orangeworld   lte"           # Orange ES (also Simyo)
-  [21401]="airtelwap.es  lte-vodafone"  # Vodafone ES
+  [21401]="airtelwap.es  lte-vodafone  wap@wap wap125"  # Vodafone ES
   [21407]="telefonica.es lte-movistar"  # Movistar ES
   [26201]="internet.telekom lte-telekom" # Telekom DE
   [26203]="internet      lte-o2"        # O2 DE
@@ -68,7 +74,64 @@ if [ -z "${SIMS[$code]}" ]; then
   log "SIM $code is not in the table, leaving the attach APN alone"
   exit 0
 fi
-read -r APN CONN <<<"${SIMS[$code]}"
+read -r APN CONN APN_USER APN_PASS <<<"${SIMS[$code]}"
+
+# The per-SIM connection if the image has one, else the generic one.
+if ! nmcli -t -f NAME con show | grep -qx "$CONN"; then
+  if nmcli -t -f NAME con show | grep -qx "$FALLBACK_CONN"; then
+    CONN="$FALLBACK_CONN"
+  else
+    log "NetworkManager has no connection '$CONN' for SIM $code; autoconnect decides"
+    CONN=""
+  fi
+fi
+
+# Write the APN into the NetworkManager connection (see the header).
+# Sets nm_changed=1 when it did.
+nm_changed=""
+known_apn() {
+  local v
+  for v in "${SIMS[@]}"; do [ "${v%% *}" = "$1" ] && return 0; done
+  return 1
+}
+fix_nm_apn() {
+  [ -n "$CONN" ] || return 0
+  local auto cur
+  auto="$(nmcli -g gsm.auto-config con show "$CONN" 2>/dev/null)"
+  cur="$(nmcli -g gsm.apn con show "$CONN" 2>/dev/null)"
+  if [ "$cur" = "$APN" ] && [ "$auto" != "yes" ]; then
+    return 0
+  fi
+  if [ "$auto" != "yes" ] && [ -n "$cur" ] && ! known_apn "$cur"; then
+    log "$CONN has APN '$cur' set by hand, keeping it"
+    return 0
+  fi
+  local args=(gsm.auto-config no gsm.apn "$APN")
+  if [ -n "$APN_USER" ]; then
+    args+=(gsm.username "$APN_USER" gsm.password "$APN_PASS" gsm.password-flags 0)
+  fi
+  if nmcli con modify "$CONN" "${args[@]}"; then
+    log "$CONN: APN '${cur:-auto}' -> '$APN'"
+    nm_changed=1
+  else
+    log "nmcli con modify $CONN FAILED"
+  fi
+}
+
+bring_up() {
+  [ -n "$CONN" ] || exit 0
+  for i in $(seq 1 3); do
+    if timeout 100 nmcli con up "$CONN" >/dev/null 2>&1; then
+      log "$CONN connection up"; exit 0
+    fi
+    log "nmcli con up $CONN attempt $i failed, retrying"
+    sleep 10
+  done
+  log "$CONN did not come up yet; NetworkManager autoconnect will keep trying"
+  exit 0
+}
+
+fix_nm_apn
 
 get_apn() {
   $QMI --wds-get-profile-list=3gpp 2>/dev/null | awk -v p="[$PROFILE]" '
@@ -79,6 +142,10 @@ get_apn() {
 
 cur="$(get_apn)"
 if [ "$cur" = "$APN" ]; then
+  if [ -n "$nm_changed" ]; then
+    log "SIM $code: profile $PROFILE already has APN '$APN'"
+    bring_up
+  fi
   log "SIM $code: profile $PROFILE already has APN '$APN', nothing to do"
   exit 0
 fi
@@ -98,21 +165,4 @@ sleep 2
 mmcli -m any --enable >/dev/null 2>&1
 
 # NetworkManager may have used up its autoconnect retries meanwhile; kick it.
-# Images with a single modem connection (no per-SIM ones) use FALLBACK_CONN.
-if ! nmcli -t -f NAME con show | grep -qx "$CONN"; then
-  if nmcli -t -f NAME con show | grep -qx "$FALLBACK_CONN"; then
-    CONN="$FALLBACK_CONN"
-  else
-    log "NetworkManager has no connection '$CONN' for SIM $code; autoconnect decides"
-    exit 0
-  fi
-fi
-for i in $(seq 1 3); do
-  if timeout 100 nmcli con up "$CONN" >/dev/null 2>&1; then
-    log "$CONN connection up"; exit 0
-  fi
-  log "nmcli con up $CONN attempt $i failed, retrying"
-  sleep 10
-done
-log "$CONN did not come up yet; NetworkManager autoconnect will keep trying"
-exit 0
+bring_up

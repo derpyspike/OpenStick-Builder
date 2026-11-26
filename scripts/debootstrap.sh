@@ -1,7 +1,10 @@
 #!/bin/sh -e
 
 CHROOT=${CHROOT=$(pwd)/rootfs}
-RELEASE=${RELEASE=bookworm}
+# Debian 13. RELEASE=bookworm still works (setup.sh picks the libconfig it has).
+# Tested in place on a UZ801 (2026-11-26): the pmOS kernel, modem (ModemManager
+# 1.24, libqmi 1.36), Wi-Fi, hotspot, Tailscale, dongie and VoWiFi all work.
+RELEASE=${RELEASE=trixie}
 HOST_NAME=${HOST_NAME=openstick}
 
 rm -rf ${CHROOT}

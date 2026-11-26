@@ -12,13 +12,16 @@ rm -f "/etc/locale.gen"
 apt update -qqy
 apt upgrade -qqy
 apt autoremove -qqy
+# gt's libconfig: libconfig11 since Debian 13, libconfig9 in Debian 12
+LIBCONFIG=libconfig9
+apt-cache show libconfig11 >/dev/null 2>&1 && LIBCONFIG=libconfig11
 apt install -qqy --no-install-recommends \
     bridge-utils \
     dnsmasq \
     iptables \
     iw \
     libqmi-utils \
-    libconfig9 \
+    ${LIBCONFIG} \
     locales \
     modemmanager \
     netcat-traditional \
