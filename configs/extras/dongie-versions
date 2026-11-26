@@ -1,6 +1,6 @@
 # Pinned dongie, muxtastic and Tailscale releases, read by scripts/build_extras.sh and flake.nix.
 # After a bump, `nix build .#extras` tells you the new hashes for flake.nix.
-DONGIE_RS_REF=v0.2.0
+DONGIE_RS_REF=v0.2.1
 DONGIE_IMS_REF=v0.2.0
 MUXTASTIC_REF=v0.2.0
 # Tailscale: static binaries from pkgs.tailscale.com, checked against this sha256

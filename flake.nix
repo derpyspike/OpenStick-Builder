@@ -41,8 +41,8 @@
       # Update after a version bump: set to lib.fakeHash, `nix build .#extras` prints the right ones.
       hashes = {
         dongie-rs = {
-          src = "sha256-8jFxOe3355srJrJg8LjX37DQ/vs4U7LU0/LYfqQ0dCU=";
-          cargo = "sha256-3tsTTWsqcDtuqg40jwUQ5DRC2te7YodNSUDZtSV5kco=";
+          src = "sha256-QcY5OuLyBt5Z6zjSj0MoA9r6c6TXt6qP93XCB5Y6gso=";
+          cargo = "sha256-aHizJvm/HuYjjDopjmxYGIRTu3oulBxYgHabasXgyQE=";
         };
         dongie-ims = {
           src = "sha256-mGK2PqrXvaOFOouqmC7Dgr1hEX2b5jtEshTqnu8VLdA=";
