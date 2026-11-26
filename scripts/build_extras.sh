@@ -153,6 +153,13 @@ elif [ "${WITH_LEVICULUM:-1}" = 1 ]; then
         CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=rust-lld \
         CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS=-Ctarget-feature=+crt-static \
         CARGO_PROFILE_RELEASE_STRIP=symbols"
+    # Leviculum pins its compiler in rust-toolchain.toml; inside its tree rustup
+    # would switch to that one, which lacks the aarch64-musl target added for
+    # dongie/muxtastic. Use the same toolchain as the other extras (tested with 1.100).
+    if command -v rustup >/dev/null; then
+        TC=$(cd / && rustup show active-toolchain 2>/dev/null | cut -d' ' -f1)
+        if [ -n "${TC}" ]; then LEV_ENV="${LEV_ENV} RUSTUP_TOOLCHAIN=${TC}"; fi
+    fi
     # no BLE and no I2P on the stick
     (cd ${SRC}/leviculum && env ${LEV_ENV} cargo build -q --release --locked --target aarch64-unknown-linux-musl \
         -p leviculum-cli --no-default-features --features compression,serial --bin lnsd --bin lnstatus)
@@ -162,7 +169,7 @@ elif [ "${WITH_LEVICULUM:-1}" = 1 ]; then
         install -D -m 0755 ${SRC}/leviculum/target/aarch64-unknown-linux-musl/release/$b ${DIST}/usr/local/bin/$b
     done
     # complete corresponding source (AGPL), with vendored dependencies
-    (cd ${SRC}/leviculum && cargo vendor -q --locked vendor-sources >/dev/null && mkdir -p .cargo && \
+    (cd ${SRC}/leviculum && env ${LEV_ENV} cargo vendor -q --locked vendor-sources >/dev/null && mkdir -p .cargo && \
         printf '\n[source.crates-io]\nreplace-with = "vendored-sources"\n\n[source.vendored-sources]\ndirectory = "vendor-sources"\n' >> .cargo/config.toml)
     rm -rf ${SRC}/leviculum/target ${SRC}/leviculum/.git
     tar -C ${SRC} -cJf files/sources-leviculum-${LEVICULUM_REF}.tar.xz leviculum
