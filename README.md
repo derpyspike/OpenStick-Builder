@@ -88,9 +88,12 @@ Edit [`scripts/setup.sh`](scripts/setup.sh) to add/remove packages. Note that th
 | fix-attach-apn | `WITH_FIX_ATTACH_APN` | The UZ801 modem firmware resets its LTE attach APN to `mobile.three.com.hk` (Three Hong Kong) at every modem boot, so some networks never register on LTE. At boot this sets the right APN for the inserted SIM (table in the script, extend it in `/etc/default/fix-attach-apn`). Unknown SIMs are left alone. |
 | dongie-leds | `WITH_LEDS` | Status LEDs. WAN LED: on = LTE connected, slow blink = searching/connecting, off = no service. WLAN LED: on = Tailscale running (if installed), otherwise Wi-Fi up (hotspot or client). Without it all LEDs just stay on. LEDs are found by name (UZ801, JZ01-45, MF800, HMUF02); override in `/etc/default/dongie-leds`. Polls every 5 s with one `busctl` call and sysfs: about 1 % of one core on a UZ801 (the old `mmcli`/`nmcli` version: 4 %). |
 | flash tweaks | `WITH_FLASH_TWEAKS` | Small journal (32 MB), NetworkManager/ModemManager logging at WARN. Together with `noatime,commit=30` in `/etc/fstab`: about 8 KiB/min of writes when idle. |
+| [Tailscale](https://tailscale.com) | `WITH_TAILSCALE` | VPN to reach the stick from anywhere; dongie's web UI and dongie-ims' calls in the browser (HTTPS via `tailscale serve`) use it. Static binaries from pkgs.tailscale.com at `TAILSCALE_VERSION`, checked against `TAILSCALE_SHA256` (both in [`configs/extras/dongie-versions`](configs/extras/dongie-versions)). Running but **not logged in**: run `sudo tailscale up` on the stick, then add its Tailscale IP to dongie's web addresses (Settings). Adds 73 MB to the rootfs; logged out it takes ~9 MB of RAM and 0.3 % CPU on a UZ801 (measured). |
 | [dongie-rs](https://github.com/derpyspike/dongie-rs) | `WITH_DONGIE` | Web dashboard + API: signal and cells, SMS and contacts, hotspot and Wi-Fi settings, network selection, WireGuard tunnels (edit peers, create tunnels), notifications (ntfy, webhook, Meshtastic, LXMF), services with RAM/CPU/network, settings from the web UI, Mesh tab for muxtastic. |
 | [dongie-ims](https://github.com/derpyspike/dongie-ims) | `WITH_DONGIE` | Wi-Fi calling (VoWiFi over the LTE data connection): receive and make calls in the browser, SMS over IMS. Installed but **off**, see below. |
 | [muxtastic](https://github.com/derpyspike/muxtastic) | `WITH_MUXTASTIC` | Shares one Meshtastic node (with Wi-Fi, joined to the stick's hotspot) between several apps; history in RAM only. Shown on dongie's Mesh tab. Installed but **off**, see below. |
+
+WireGuard needs no extra: the kernel module and `wireguard-tools` are in every image, and NetworkManager runs WireGuard tunnels itself (dongie's WireGuard tab edits them).
 
 dongie-rs, dongie-ims and muxtastic are built from source at the tags in [`configs/extras/dongie-versions`](configs/extras/dongie-versions) (`DONGIE_RS_REF`, `DONGIE_IMS_REF`, `MUXTASTIC_REF`). muxtastic has C parts (SQLite, aws-lc), cross-compiled with zig ([`scripts/zigcc-aarch64-musl`](scripts/zigcc-aarch64-musl)); the Nix flake doesn't build it yet, `MUXTASTIC_PREBUILT=<dir>` (`bin/muxtastic`, `sources/*.tar.xz`) takes one built elsewhere.
 
@@ -236,3 +239,7 @@ its own license, among them:
   (AGPL-3.0-or-later); their complete source, including vendored
   dependencies, is in `sources-dongie-*.tar.xz` and `sources-muxtastic-*.tar.xz`
   next to the images
+- Tailscale (BSD-3-Clause, unmodified release binaries; license in
+  `/usr/share/doc/tailscale/LICENSE`, the licenses of its dependencies at
+  [tailscale.com/licenses/tailscale](https://tailscale.com/licenses/tailscale),
+  source at [github.com/tailscale/tailscale](https://github.com/tailscale/tailscale))

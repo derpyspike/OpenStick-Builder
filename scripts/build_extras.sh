@@ -123,6 +123,34 @@ if [ "${WITH_MUXTASTIC:-1}" = 1 ]; then
     # systemctl enable --now muxtastic
 fi
 
+# Tailscale (BSD-3-Clause): VPN to reach the stick from anywhere; dongie's
+# web UI and dongie-ims' browser calls (HTTPS via `tailscale serve`) lean on
+# it. Static binaries from pkgs.tailscale.com at TAILSCALE_VERSION, checked
+# against TAILSCALE_SHA256. Installed and running, but not logged in: no auth
+# key is ever put into the image. On the stick: tailscale up
+# TAILSCALE_TGZ=<file> uses a tarball fetched elsewhere (the Nix flake does).
+if [ "${WITH_TAILSCALE:-1}" = 1 ]; then
+    TGZ=${TAILSCALE_TGZ:-$(pwd)/build/tailscale_${TAILSCALE_VERSION}_arm64.tgz}
+    if [ ! -f "${TGZ}" ]; then
+        command -v curl >/dev/null || { echo "build_extras: 'curl' not found (or build with WITH_TAILSCALE=0)"; exit 1; }
+        mkdir -p "$(dirname ${TGZ})"
+        curl -sSfL -o ${TGZ}.part https://pkgs.tailscale.com/stable/tailscale_${TAILSCALE_VERSION}_arm64.tgz
+        mv ${TGZ}.part ${TGZ}
+    fi
+    echo "${TAILSCALE_SHA256}  ${TGZ}" | sha256sum -c --quiet - || \
+        { echo "build_extras: ${TGZ} doesn't match TAILSCALE_SHA256"; exit 1; }
+    T=$(mktemp -d)
+    tar -C ${T} -xzf ${TGZ}
+    TS=${T}/tailscale_${TAILSCALE_VERSION}_arm64
+    install -D -m 0755 ${TS}/tailscaled ${DIST}/usr/sbin/tailscaled
+    install -D -m 0755 ${TS}/tailscale ${DIST}/usr/bin/tailscale
+    install -D -m 0644 ${TS}/systemd/tailscaled.service ${DIST}/etc/systemd/system/tailscaled.service
+    install -D -m 0644 ${TS}/systemd/tailscaled.defaults ${DIST}/etc/default/tailscaled
+    install -D -m 0644 ${X}/tailscale.LICENSE ${DIST}/usr/share/doc/tailscale/LICENSE
+    rm -rf ${T}
+    enable_unit tailscaled.service
+fi
+
 # systemd enables every unit on the first boot unless a preset says otherwise
 if [ "${WITH_DONGIE:-1}" = 1 ] || [ "${WITH_MUXTASTIC:-1}" = 1 ]; then
     install -D -m 0644 ${X}/20-openstick-extras.preset \
