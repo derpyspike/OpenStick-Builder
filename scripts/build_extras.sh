@@ -162,6 +162,8 @@ if [ "${WITH_DONGIE:-1}" = 1 ]; then
     install -D -m 0644 ${X}/dongie-ims.service ${DIST}/etc/systemd/system/dongie-ims.service
     # dongie's VoWiFi switch: "off" there keeps systemd from starting dongie-ims
     install -D -m 0644 ${X}/dongie-ims-switch.conf ${DIST}/etc/systemd/system/dongie-ims.service.d/dongie.conf
+    # dongie-ims VoLTE opens the modem's DATA6_CNTL as /dev/rpmsgN: keep ModemManager off it
+    install -D -m 0644 ${X}/78-mm-ignore-rpmsg-ept.rules ${DIST}/etc/udev/rules.d/78-mm-ignore-rpmsg-ept.rules
     if [ "${WITH_TAILSCALE:-1}" = 1 ]; then
         # dongie as Tailscale operator: prefs + its HTTPS (tailscale serve) switch
         install -D -m 0644 ${X}/tailscaled-operator.conf ${DIST}/etc/systemd/system/tailscaled.service.d/dongie-operator.conf
