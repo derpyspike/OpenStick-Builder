@@ -11,4 +11,4 @@ api_enabled = false
 anonymous_guest = false
 hotspot_connection = "hotspot"
 lte_connection = "lte"
-services = ["ModemManager", "NetworkManager", "fix-attach-apn", "dongie-ims", "dnsproxy", "ssh"]
+services = ["ModemManager", "NetworkManager", "tailscaled", "fix-attach-apn", "dongie-leds", "dongie-ims", "muxtastic", "dnsproxy", "ssh"]
