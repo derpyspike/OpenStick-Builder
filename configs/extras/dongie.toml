@@ -4,9 +4,15 @@
 # Web UI + login on the bridge (Wi-Fi hotspot + USB): http://192.168.100.1:8040
 # Create the first login with:  sudo dongie user add <name>
 web_listen = "192.168.100.1:8040"
+# ...and on the stick's Tailscale addresses, whatever they are (after `tailscale up`)
+web_listen_extra = ["tailscale:8040"]
 # The unauthenticated read-only API is meant for a VPN address (e.g. Tailscale) only,
 # so it is off here. Turn on with api_enabled = true + api_listen = "<vpn-ip>:8041".
 api_enabled = false
+# Firewall (nftables): zones x services, edited on the Network tab. Defaults:
+# everything on the bridge/Tailscale/WireGuard, SSH + ping from a Wi-Fi the
+# stick joins, nothing from LTE. See dongie's docs/security.md.
+firewall = true
 # Dashboard without login (guest view: signal, usage, services; no SMS, numbers,
 # IMEI or locations) for devices on the bridge (USB + hotspot) and the tailnet,
 # not for the upstream Wi-Fi when the stick is a client. Change the hotspot's

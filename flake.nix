@@ -41,12 +41,12 @@
       # Update after a version bump: set to lib.fakeHash, `nix build .#extras` prints the right ones.
       hashes = {
         dongie-rs = {
-          src = "sha256-A131yBZS6Oa+wKIw6kD8PNskwnYcw/uO5DNVBKvRKZw=";
-          cargo = "sha256-cmxK7A7+iZRs7FzjexhuVq9bKM11zTo2KKmNoML/zd8=";
+          src = "sha256-ffKfggWlCZMGiAhC991h5ZWarlqpfKEAB6lWr6o6PWI=";
+          cargo = "sha256-7pBs1WqBW1tgkBybG6oJbe8e9sQbZ2DSVe5q9YY4w3I=";
         };
         dongie-ims = {
-          src = "sha256-mGK2PqrXvaOFOouqmC7Dgr1hEX2b5jtEshTqnu8VLdA=";
-          vendor = "sha256-hNNUN4TgKgWMFSzFSgBbBfNDYvZjkA11UNBItxBJZD4=";
+          src = "sha256-03/3s3gX9SBAjRUa1ScNoVQsqw3/8HV/R36tfG3GaUI=";
+          vendor = "sha256-4miYfz9gonoteifEcQuiHZFMfW5vs2GAlddD2UjFMuU=";
         };
       };
 
@@ -105,6 +105,12 @@
               hash = hashes.dongie-ims.src;
             };
             vendorHash = hashes.dongie-ims.vendor;
+            # dongie-ims >= 0.3.0: patch the vendored ims-go (VoLTE ESP socket),
+            # as its scripts/vendor.sh does
+            modPostBuild = ''
+              chmod -R u+w vendor/github.com/damonto/ims-go
+              patch -p1 -d vendor/github.com/damonto/ims-go < patches/ims-go-esp-numeric.patch
+            '';
             env.CGO_ENABLED = 0;
             ldflags = [ "-s" "-w" ];
             # cross-compile for the stick; tests can't run on an x86 host

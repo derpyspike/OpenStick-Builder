@@ -1,7 +1,7 @@
 # Pinned dongie, muxtastic and Tailscale releases, read by scripts/build_extras.sh and flake.nix.
 # After a bump, `nix build .#extras` tells you the new hashes for flake.nix.
-DONGIE_RS_REF=v0.2.2
-DONGIE_IMS_REF=v0.2.0
+DONGIE_RS_REF=v0.3.0
+DONGIE_IMS_REF=v0.3.0
 MUXTASTIC_REF=v0.2.0
 # Leviculum (Reticulum in Rust): lnsd, lnstatus, loquax (= lnmsg) from the
 # dongie-master branch of github.com/derpyspike/leviculum (upstream + local

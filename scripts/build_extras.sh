@@ -64,8 +64,10 @@ elif [ "${WITH_DONGIE:-1}" = 1 ]; then
     git clone -q --depth 1 -b ${DONGIE_IMS_REF} ${DONGIE_IMS_REPO} ${SRC}/dongie-ims
 
     (cd ${SRC}/dongie-rs && cargo build -q --release --locked --target aarch64-unknown-linux-musl)
-    (cd ${SRC}/dongie-ims && CGO_ENABLED=0 GOOS=linux GOARCH=arm64 \
-        go build -trimpath -ldflags='-s -w' -o dongie-ims .)
+    # dongie-ims >= 0.3.0 carries a patch for a vendored ims-go (VoLTE's ESP
+    # socket): its scripts/vendor.sh vendors + patches, then build from vendor/
+    (cd ${SRC}/dongie-ims && sh scripts/vendor.sh && CGO_ENABLED=0 GOOS=linux GOARCH=arm64 \
+        go build -mod=vendor -trimpath -ldflags='-s -w' -o dongie-ims .)
 
     install -D -m 0755 ${SRC}/dongie-rs/target/aarch64-unknown-linux-musl/release/dongie ${DIST}/usr/local/bin/dongie
     install -D -m 0755 ${SRC}/dongie-ims/dongie-ims ${DIST}/usr/local/bin/dongie-ims
@@ -73,7 +75,7 @@ elif [ "${WITH_DONGIE:-1}" = 1 ]; then
     # complete corresponding source, including vendored Rust/Go dependencies
     (cd ${SRC}/dongie-rs && cargo vendor -q --locked vendor >/dev/null && mkdir -p .cargo && \
         printf '\n[source.crates-io]\nreplace-with = "vendored-sources"\n\n[source.vendored-sources]\ndirectory = "vendor"\n' >> .cargo/config.toml)
-    (cd ${SRC}/dongie-ims && go mod vendor)
+    # dongie-ims: vendor/ is already there, patched exactly as built
     rm -rf ${SRC}/dongie-rs/target ${SRC}/dongie-rs/.git ${SRC}/dongie-ims/.git ${SRC}/dongie-ims/dongie-ims
     tar -C ${SRC} -cJf files/sources-dongie-rs-${DONGIE_RS_REF}.tar.xz dongie-rs
     tar -C ${SRC} -cJf files/sources-dongie-ims-${DONGIE_IMS_REF}.tar.xz dongie-ims
@@ -234,6 +236,9 @@ if [ "${WITH_DONGIE:-1}" = 1 ]; then
     fi
     # root helper behind dongie's Update button (signed releases only; never enabled)
     install -D -m 0644 ${X}/dongie-update.service ${DIST}/etc/systemd/system/dongie-update.service
+    # dongie's firewall (nftables, firewall = true in dongie.toml): loads the
+    # rules at boot before the network
+    install -D -m 0644 ${X}/dongie-firewall.service ${DIST}/etc/systemd/system/dongie-firewall.service
     install -D -m 0640 ${X}/dongie.toml ${DIST}/etc/dongie/config.toml
     install -D -m 0644 ${X}/dongie.sysusers ${DIST}/usr/lib/sysusers.d/dongie.conf
     install -D -m 0644 ${X}/dongie.tmpfiles ${DIST}/usr/lib/tmpfiles.d/dongie.conf
@@ -253,6 +258,7 @@ if [ "${WITH_DONGIE:-1}" = 1 ]; then
         echo "build_extras: no classic visudo to check sudoers.d/dongie with, skipped"
     fi
     enable_unit dongie.service
+    enable_unit dongie-firewall.service
     # dongie-ims is NOT enabled: registering for Wi-Fi calling moves the SIM's
     # calls to the stick. Turn on with: systemctl enable --now dongie-ims
     # (or, with a dongie that has it, the VoWiFi switch on the Mobile tab)
