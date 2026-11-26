@@ -160,6 +160,12 @@ fi
 if [ "${WITH_DONGIE:-1}" = 1 ]; then
     install -D -m 0644 ${X}/dongie.service ${DIST}/etc/systemd/system/dongie.service
     install -D -m 0644 ${X}/dongie-ims.service ${DIST}/etc/systemd/system/dongie-ims.service
+    # dongie's VoWiFi switch: "off" there keeps systemd from starting dongie-ims
+    install -D -m 0644 ${X}/dongie-ims-switch.conf ${DIST}/etc/systemd/system/dongie-ims.service.d/dongie.conf
+    if [ "${WITH_TAILSCALE:-1}" = 1 ]; then
+        # dongie as Tailscale operator: prefs + its HTTPS (tailscale serve) switch
+        install -D -m 0644 ${X}/tailscaled-operator.conf ${DIST}/etc/systemd/system/tailscaled.service.d/dongie-operator.conf
+    fi
     # root helper behind dongie's Update button (signed releases only; never enabled)
     install -D -m 0644 ${X}/dongie-update.service ${DIST}/etc/systemd/system/dongie-update.service
     install -D -m 0640 ${X}/dongie.toml ${DIST}/etc/dongie/config.toml
@@ -183,4 +189,5 @@ if [ "${WITH_DONGIE:-1}" = 1 ]; then
     enable_unit dongie.service
     # dongie-ims is NOT enabled: registering for Wi-Fi calling moves the SIM's
     # calls to the stick. Turn on with: systemctl enable --now dongie-ims
+    # (or, with a dongie that has it, the VoWiFi switch on the Mobile tab)
 fi
