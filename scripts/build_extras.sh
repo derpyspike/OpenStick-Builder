@@ -160,6 +160,8 @@ fi
 if [ "${WITH_DONGIE:-1}" = 1 ]; then
     install -D -m 0644 ${X}/dongie.service ${DIST}/etc/systemd/system/dongie.service
     install -D -m 0644 ${X}/dongie-ims.service ${DIST}/etc/systemd/system/dongie-ims.service
+    # root helper behind dongie's Update button (signed releases only; never enabled)
+    install -D -m 0644 ${X}/dongie-update.service ${DIST}/etc/systemd/system/dongie-update.service
     install -D -m 0640 ${X}/dongie.toml ${DIST}/etc/dongie/config.toml
     install -D -m 0644 ${X}/dongie.sysusers ${DIST}/usr/lib/sysusers.d/dongie.conf
     install -D -m 0644 ${X}/dongie.tmpfiles ${DIST}/usr/lib/tmpfiles.d/dongie.conf
