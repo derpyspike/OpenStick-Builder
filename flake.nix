@@ -149,10 +149,10 @@
           '';
 
           # runs the same scripts/build_extras.sh, with the Nix-built dongie
-          # (without muxtastic: its zig build needs the network, not in the sandbox)
+          # (without muxtastic and Leviculum: their builds need the network, not in the sandbox)
           extras = pkgs.runCommand "openstick-extras" { nativeBuildInputs = [ pkgs.sudo ]; } ''
             cp -r ${self} src && chmod -R u+w src && cd src
-            DIST=$out/rootfs DONGIE_PREBUILT=${dongie} TAILSCALE_TGZ=${tailscale-tgz} WITH_MUXTASTIC=0 sh -e scripts/build_extras.sh
+            DIST=$out/rootfs DONGIE_PREBUILT=${dongie} TAILSCALE_TGZ=${tailscale-tgz} WITH_MUXTASTIC=0 WITH_LEVICULUM=0 sh -e scripts/build_extras.sh
             mv files $out/files
           '';
         in
