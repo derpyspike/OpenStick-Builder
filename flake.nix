@@ -1,5 +1,5 @@
 {
-  description = "OpenStick-Builder extras (fix-attach-apn, flash tweaks, dongie-rs + dongie-ims) for MSM8916 4G sticks";
+  description = "OpenStick-Builder extras (fix-attach-apn, dongie-leds, flash tweaks, dongie-rs + dongie-ims) for MSM8916 4G sticks";
   # (muxtastic isn't built here yet: build_extras.sh builds it with zig, or MUXTASTIC_PREBUILT)
 
   # nix build .#extras      -> rootfs/ (the tree build_extras.sh stages into dist/) + files/ (source archives)

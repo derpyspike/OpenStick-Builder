@@ -86,6 +86,7 @@ Edit [`scripts/setup.sh`](scripts/setup.sh) to add/remove packages. Note that th
 | | variable | what it does |
 | --- | --- | --- |
 | fix-attach-apn | `WITH_FIX_ATTACH_APN` | The UZ801 modem firmware resets its LTE attach APN to `mobile.three.com.hk` (Three Hong Kong) at every modem boot, so some networks never register on LTE. At boot this sets the right APN for the inserted SIM (table in the script, extend it in `/etc/default/fix-attach-apn`). Unknown SIMs are left alone. |
+| dongie-leds | `WITH_LEDS` | Status LEDs. WAN LED: on = LTE connected, slow blink = searching/connecting, off = no service. WLAN LED: on = Tailscale running (if installed), otherwise Wi-Fi up (hotspot or client). Without it all LEDs just stay on. LEDs are found by name (UZ801, JZ01-45, MF800, HMUF02); override in `/etc/default/dongie-leds`. Polls every 5 s with one `busctl` call and sysfs: about 1 % of one core on a UZ801 (the old `mmcli`/`nmcli` version: 4 %). |
 | flash tweaks | `WITH_FLASH_TWEAKS` | Small journal (32 MB), NetworkManager/ModemManager logging at WARN. Together with `noatime,commit=30` in `/etc/fstab`: about 8 KiB/min of writes when idle. |
 | [dongie-rs](https://github.com/derpyspike/dongie-rs) | `WITH_DONGIE` | Web dashboard + API: signal and cells, SMS and contacts, hotspot and Wi-Fi settings, network selection, WireGuard tunnels (edit peers, create tunnels), notifications (ntfy, webhook, Meshtastic, LXMF), services with RAM/CPU/network, settings from the web UI, Mesh tab for muxtastic. |
 | [dongie-ims](https://github.com/derpyspike/dongie-ims) | `WITH_DONGIE` | Wi-Fi calling (VoWiFi over the LTE data connection): receive and make calls in the browser, SMS over IMS. Installed but **off**, see below. |
@@ -230,7 +231,7 @@ its own license, among them:
   `linux-postmarketos-qcom-msm8916`, source via
   [postmarketOS](https://pkgs.postmarketos.org/package/master/postmarketos/aarch64/linux-postmarketos-qcom-msm8916)
 - lk2nd, qhypstub, gt and libusbgx (git submodules in `src/`)
-- extras: fix-attach-apn and the dongie configs (EUPL-1.2, SPDX headers),
+- extras: fix-attach-apn, dongie-leds and the dongie configs (EUPL-1.2, SPDX headers),
   dongie-rs (EUPL-1.2), dongie-ims (GPL-3.0) and muxtastic
   (AGPL-3.0-or-later); their complete source, including vendored
   dependencies, is in `sources-dongie-*.tar.xz` and `sources-muxtastic-*.tar.xz`

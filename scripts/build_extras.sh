@@ -19,6 +19,17 @@ if [ "${WITH_FIX_ATTACH_APN:-1}" = 1 ]; then
     enable_unit fix-attach-apn.service
 fi
 
+# dongie-leds: status LEDs. WAN LED on = LTE connected, slow blink = searching
+# or connecting, off = no service; WLAN LED on = Tailscale running (if
+# installed), else Wi-Fi up (hotspot or client). Without it the LEDs just stay
+# on. LEDs are found by name, so it fits UZ801, JZ01-45, MF800 and HMUF02;
+# override in /etc/default/dongie-leds. Same script as dongie-rs/contrib.
+if [ "${WITH_LEDS:-1}" = 1 ]; then
+    install -m 0755 ${X}/dongie-leds ${DIST}/usr/local/sbin/dongie-leds
+    install -m 0644 ${X}/dongie-leds.service ${DIST}/etc/systemd/system/
+    enable_unit dongie-leds.service
+fi
+
 # fewer flash writes: small journal, quieter NetworkManager/ModemManager logs
 # (measured on a UZ801: ~8 KiB/min of writes when idle)
 if [ "${WITH_FLASH_TWEAKS:-1}" = 1 ]; then
