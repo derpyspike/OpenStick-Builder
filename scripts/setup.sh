@@ -53,9 +53,9 @@ printf 'ALGO=zstd\nPERCENT=90\nPRIORITY=100\n' > /etc/default/zramswap
 # Cleanup
 apt clean
 rm -rf /var/lib/apt/lists/*
-rm /etc/machine-id
-rm /var/lib/dbus/machine-id
-rm /etc/ssh/ssh_host_*
+rm -f /etc/machine-id
+rm -f /var/lib/dbus/machine-id
+rm -f /etc/ssh/ssh_host_*
 find /var/log -type f -delete
 
 passwd -dl root
@@ -95,5 +95,7 @@ systemctl mask systemd-networkd-wait-online.service
 # Prevent the accidental shutdown by power button
 sed -i 's/^#HandlePowerKey=poweroff/HandlePowerKey=ignore/' /etc/systemd/logind.conf
 
-# Enable IPv4 and IPv6 forwarding by uncommenting the relevant lines in /etc/sysctl.conf
-sed -i -e 's/^#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' -e 's/^#net.ipv6.conf.all.forwarding=1/net.ipv6.conf.all.forwarding=1/' /etc/sysctl.conf
+# Enable IPv4 and IPv6 forwarding (the bridge's NAT). Its own file: Debian 13
+# no longer ships /etc/sysctl.conf (an upgrade from 12 saves an edited one as
+# /etc/sysctl.conf.dpkg-bak, and forwarding is silently off afterwards).
+printf 'net.ipv4.ip_forward=1\nnet.ipv6.conf.all.forwarding=1\n' > /etc/sysctl.d/99-openstick-forwarding.conf
